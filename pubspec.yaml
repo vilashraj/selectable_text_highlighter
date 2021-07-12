@@ -1,6 +1,6 @@
 name: selectable_text_highlighter
-description: A new Flutter package project.
-version: 0.0.1
+description: This package helps you to select and highlight the text.
+version: 0.0.1+1
 homepage: https://github.com/vilashraj/selectable_text_highlighter
 
 environment:
