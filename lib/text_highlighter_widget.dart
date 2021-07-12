@@ -5,11 +5,10 @@ import 'package:flutter/material.dart';
 import 'models/highlighted_offset.dart';
 import 'utils/custom_text_selection.dart' as CTS;
 
-typedef OnHighlightedCallback = void Function(List<HighlightedOffset> updatedHighlightedOffsetsList);
-
+typedef OnHighlightedCallback = void Function(
+    List<HighlightedOffset> updatedHighlightedOffsetsList);
 
 class SelectableHighlighterText extends StatefulWidget {
-
   final String text;
   final TextStyle? unHighlightedStyle;
   final TextStyle? highlightedStyle;
@@ -17,14 +16,22 @@ class SelectableHighlighterText extends StatefulWidget {
   final List<HighlightedOffset>? preHighlightedTexts;
   final OnHighlightedCallback? onHighlightedCallback;
 
-  SelectableHighlighterText({ Key? key, required this.text, this.toolbarOptions, this.unHighlightedStyle, this.highlightedStyle, this.preHighlightedTexts, this.onHighlightedCallback}) : super(key: key);
+  SelectableHighlighterText(
+      {Key? key,
+      required this.text,
+      this.toolbarOptions,
+      this.unHighlightedStyle,
+      this.highlightedStyle,
+      this.preHighlightedTexts,
+      this.onHighlightedCallback})
+      : super(key: key);
 
   @override
-  _SelectableHighlighterTextState createState() => _SelectableHighlighterTextState();
+  _SelectableHighlighterTextState createState() =>
+      _SelectableHighlighterTextState();
 }
 
 class _SelectableHighlighterTextState extends State<SelectableHighlighterText> {
-
   int tempBaseOffset = 0;
   int tempExtentOffset = 0;
   List<HighlightedOffset> offsets = [];
@@ -32,12 +39,13 @@ class _SelectableHighlighterTextState extends State<SelectableHighlighterText> {
   late TextStyle unHighlightedTextStyle;
   late TextStyle highlightedTextStyle;
 
-
   @override
   void initState() {
     offsets = widget.preHighlightedTexts ?? offsets;
-    unHighlightedTextStyle = widget.unHighlightedStyle ?? TextStyle(color: Colors.black, fontSize: 16);
-    highlightedTextStyle = widget.highlightedStyle ?? TextStyle(color: Colors.blue, fontSize: 16);
+    unHighlightedTextStyle = widget.unHighlightedStyle ??
+        TextStyle(color: Colors.black, fontSize: 16);
+    highlightedTextStyle =
+        widget.highlightedStyle ?? TextStyle(color: Colors.blue, fontSize: 16);
     super.initState();
   }
 
@@ -47,84 +55,73 @@ class _SelectableHighlighterTextState extends State<SelectableHighlighterText> {
       TextSpan(
         children: textSpanList(),
       ),
-      onSelectionChanged: (value,reason){
+      onSelectionChanged: (value, reason) {
         tempBaseOffset = min(value.baseOffset, value.extentOffset);
         tempExtentOffset = max(value.baseOffset, value.extentOffset);
       },
       toolbarOptions: widget.toolbarOptions,
-      selectionControls: CTS.CupertinoTextSelectionControls(onHighlight: (){
+      selectionControls: CTS.CupertinoTextSelectionControls(onHighlight: () {
         setState(() {
-          offsets.add(HighlightedOffset(tempBaseOffset, tempExtentOffset, widget.text.substring(tempBaseOffset, tempExtentOffset)));
+          offsets.add(HighlightedOffset(tempBaseOffset, tempExtentOffset,
+              widget.text.substring(tempBaseOffset, tempExtentOffset)));
           minimize(offsets);
         });
-        if(widget.onHighlightedCallback != null){
+        if (widget.onHighlightedCallback != null) {
           widget.onHighlightedCallback!(offsets);
         }
       }),
     );
   }
 
-  void minimize(List<HighlightedOffset> list){
+  void minimize(List<HighlightedOffset> list) {
     list.sort((a, b) => a.start.compareTo(b.start));
     List<HighlightedOffset> stack = [];
-      list.forEach((i){
-        if(stack.isEmpty){
+    list.forEach((i) {
+      if (stack.isEmpty) {
+        stack.add(i);
+      } else {
+        HighlightedOffset top = stack.last;
+        if (top.end < i.start) {
           stack.add(i);
+        } else if (top.end < i.end) {
+          top.end = i.end;
+          stack.removeLast();
+          stack.add(top);
         }
-        else{
-          HighlightedOffset top = stack.last;
-          if(top.end < i.start){
-            stack.add(i);
-          }
-          else if(top.end<i.end){
-            top.end = i.end;
-            stack.removeLast();
-            stack.add(top);
-          }
-        }
-      });
-      offsets = stack;
-  } 
+      }
+    });
+    offsets = stack;
+  }
 
-  List<TextSpan> textSpanList(){
+  List<TextSpan> textSpanList() {
     List<TextSpan> list = [];
-    if(offsets.isEmpty){
-      return [TextSpan(
-        text: widget.text,
-        style: unHighlightedTextStyle
-      )];
+    if (offsets.isEmpty) {
+      return [TextSpan(text: widget.text, style: unHighlightedTextStyle)];
     }
     list.add(TextSpan(
-        text: widget.text.substring(0,offsets.first.start),
-        style: unHighlightedTextStyle
-      ));
+        text: widget.text.substring(0, offsets.first.start),
+        style: unHighlightedTextStyle));
 
-
-    for(int i = 0; i<offsets.length; i++){
+    for (int i = 0; i < offsets.length; i++) {
       HighlightedOffset element = offsets[i];
-      if(i == 0){
+      if (i == 0) {
         list.add(TextSpan(
-          text: widget.text.substring(element.start,element.end),
-          style: highlightedTextStyle
-        ));
-      }
-      else{
+            text: widget.text.substring(element.start, element.end),
+            style: highlightedTextStyle));
+      } else {
         list.add(TextSpan(
-          text: widget.text.substring(offsets[i-1].end,element.start),
+          text: widget.text.substring(offsets[i - 1].end, element.start),
           style: unHighlightedTextStyle,
         ));
         list.add(TextSpan(
-          text: widget.text.substring(element.start,element.end),
-          style: highlightedTextStyle
-        ));
+            text: widget.text.substring(element.start, element.end),
+            style: highlightedTextStyle));
       }
     }
 
     list.add(TextSpan(
         text: widget.text.substring(offsets.last.end, widget.text.length),
-        style: unHighlightedTextStyle
-      ));
+        style: unHighlightedTextStyle));
     return list;
   }
-
 }

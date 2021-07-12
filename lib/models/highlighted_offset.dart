@@ -1,4 +1,4 @@
-class HighlightedOffset{
+class HighlightedOffset {
   int start;
   int end;
   String highlightedText;
